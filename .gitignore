@@ -1,0 +1,7 @@
+depr/
+ica_temp/
+participants/
+prepared_features/
+results/
+*.mat
+*.asv
