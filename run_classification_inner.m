@@ -7,9 +7,8 @@ num_subjects = length(participant_pool);
 verbose = false;
 
 
-results_lda_kfold_table = cell(num_subjects, 1);
-results_lda_block_table = cell(num_subjects, 1);
-
+results_kfold_table = cell(num_subjects, 1);
+results_block_table = cell(num_subjects, 1);
 
 
 %%
@@ -17,6 +16,10 @@ if isempty(gcp('nocreate'))
     parpool(num_threads);
 end
 for s = participant_pool
+    % make the folder and file name by participant
+    mkdir([pwd, '\results\participant\', char(sprintf("%i\\%s", s, classifier_str))]);
+    mat_name = ['results\participant\', char(sprintf("%i\\%s\\", s, classifier_str)), file_name, '.mat'];
+
     %% load pre-saved features in TrialContainer
     fprintf('Working on subject %i\n', s);
     
@@ -45,114 +48,56 @@ for s = participant_pool
     
     
     %% classification params
-
     cv = CrossValidator(optimize_single_run);
     folds = 6;
     runs = 5;
-    
-%     feature_num = round(trials_read_rest.featureVectorLength()/2);
-%     feature_num = trials_read_rest.featureVectorLength();
 
     if randomization_flag == 0 
         % k-fold classification
         disp('Performing k-fold classification...')
         % lda
-        results_lda_kfold = cv.kfold(classifier_func, trials_read_rest, folds, ...
+        results_kfold = cv.kfold(classifier_func, trials_read_rest, folds, ...
             num_filtered_features=feature_num, ...
             runs=runs);
-        results_lda_kfold_table{s} = results_lda_kfold.makeResultsTable();
+        results_kfold_table{s} = results_kfold.makeResultsTable();
     
         
         % blocked CV
         disp('Performing blocked classification...')
         % lda
-        results_lda_block = cv.block(classifier_func, trials_read_rest, folds, ...
+        results_block = cv.block(classifier_func, trials_read_rest, folds, ...
             num_filtered_features=feature_num, ...
             runs=runs);
-        results_lda_block_table{s} = results_lda_block.makeResultsTable();
+        results_block_table{s} = results_block.makeResultsTable();
     else
         % k-fold classification
         disp('Performing k-fold classification...')
         % lda
-        results_lda_kfold = cv.kfold_random(classifier_func, trials_read_rest, folds, ...
+        results_kfold = cv.kfold_random(classifier_func, trials_read_rest, folds, ...
             num_filtered_features=feature_num, ...
             runs=runs);
-        results_lda_kfold_table{s} = results_lda_kfold.makeResultsTable();
+        results_kfold_table{s} = results_kfold.makeResultsTable();
     
         
         % blocked CV
         disp('Performing blocked classification...')
         % lda
-        results_lda_block = cv.block_random_kfold_classify(classifier_func, trials_read_rest, folds, ...
+        results_block = cv.block_random_kfold_classify(classifier_func, trials_read_rest, folds, ...
             num_filtered_features=feature_num, ...
             runs=runs);
-        results_lda_block_table{s} = results_lda_block.makeResultsTable();
+        results_block_table{s} = results_block.makeResultsTable();
     end
 
-end
-% delete(gcp('nocreate'));
-
-
-%% results
-summary_lda_kfold = make_results_summary(results_lda_kfold_table);
-summary_lda_block = make_results_summary(results_lda_block_table);
-
-
-sheet_name = "Summary";
-col1_name = "kfold - Read/Rest Classification";
-col2_name = "block - Read/Rest Classification";
-
-
-writematrix("classifier", excel_name, 'Sheet', sheet_name, 'Range', 'B2');
-% writematrix("LDA classifier", excel_name, 'Sheet', sheet_name, 'Range', 'B2');
-writematrix(col1_name, excel_name, 'Sheet', sheet_name, 'Range', 'B3');
-writetable(summary_lda_kfold, excel_name, 'Sheet', sheet_name, 'Range', 'B4', 'WriteRowNames', true);
-
-writematrix("classifier", excel_name, 'Sheet', sheet_name, 'Range', 'G2');
-% writematrix("LDA classifier", excel_name, 'Sheet', sheet_name, 'Range', 'G2');
-writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'G3');
-writetable(summary_lda_block, excel_name, 'Sheet', sheet_name, 'Range', 'G4', 'WriteRowNames', true);
-
-for i = participant_pool
-    sheet_name = sprintf('Sub %02i', i);
-    writematrix("RF classifier", excel_name, 'Sheet', sheet_name, 'Range', 'B2');
-    writematrix(col1_name, excel_name, 'Sheet', sheet_name, 'Range', 'B3');
-    writetable(results_lda_kfold_table{i}, excel_name, 'Sheet', sheet_name, 'Range', 'B4', 'WriteRowNames', true);
-    
-    writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'G3');
-    writetable(results_lda_block_table{i}, excel_name, 'Sheet', sheet_name, 'Range', 'G4', 'WriteRowNames', true);
+    participant_results_kfold = results_kfold_table{s};
+    participant_results_block = results_block_table{s};
+    save(mat_name, "participant_results_kfold", "participant_results_block");
 end
 
 run_time = toc(t_start);
 sprintf("Total run time was %.3fs", run_time)
-save(mat_name);
+
 
 %% Helper functions
-function summary = make_results_summary(results)
-    summary = zeros(length(results)+2,3);
-    for i = 1:length(results)
-        summary(i,1) = results{i}.Accuracy(end-1);
-        summary(i,2) = results{i}.Sensitivity(end-1);
-        summary(i,3) = results{i}.Specificity(end-1);
-    end
-    summary(end-1,1) = mean(summary(1:end-2,1));
-    summary(end-1,2) = mean(summary(1:end-2,2));
-    summary(end-1,3) = mean(summary(1:end-2,3));
-
-    summary(end,1) = std(summary(1:end-2,1));
-    summary(end,2) = std(summary(1:end-2,2));
-    summary(end,3) = std(summary(1:end-2,3));
-    
-    col_names = [ "Accuracy", "Sensitivity", "Specificity" ];
-    row_names = [];
-    for i = 1:length(results)
-        row_names = [row_names, string(sprintf('Sub %i', i))];
-    end
-    row_names = [row_names, "mean", "std"];
-    summary = array2table(summary, 'RowNames', row_names, 'VariableNames', col_names);
-end
-
-
 function split_class_trials = split_single_class_trials(trial_cont)
     arguments
         trial_cont TrialContainer

@@ -46,11 +46,8 @@ for i = 1:length(run_params_set)
         randomization_str = "r";
     end
 
-%     file_name = 'random svm 60s 30 feats';
-    file_name = char(sprintf("%s/%s %s %i feats", classifier_str, randomization_str, dur_str, feature_num));
-    temp = mkdir([pwd, '/results/', char(sprintf('%s', classifier_str))]);
-    excel_name = ['results/', file_name,'.xlsx'];
-    mat_name = ['results/', file_name, '.mat'];
+    % file_name formatting looks like: 'svm/r 60s 30 feats';
+    file_name = char(sprintf("%s %s %i feats", randomization_str, dur_str, feature_num));
 
     run_classification_inner;
 
