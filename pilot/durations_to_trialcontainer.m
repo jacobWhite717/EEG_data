@@ -1,8 +1,7 @@
 clear;
 
-SUBJECT_NUM = 9;
-% SUBJECT_NUM = mod(SUBJECT_NUM-1, 6)+1;
-durations = [5, 15, 60];
+SUBJECT_NUM = 4;
+durations = [5, 15, 30, 60];
 
 datapath = ['E:\\EEG_working\\EEG_data\\participants\\' char(sprintf("%i", SUBJECT_NUM)) '\\cleaned\\'];
 save_to_folder_path = 'E:\EEG_working\EEG_data\prepared_features\no_ica\';
@@ -12,7 +11,7 @@ feature_folder_names = {'bandpower', 'mean', 'variance', 'rms'};
 
 
 %% calc features
-for dur = 1:3
+for dur = 1:4
     loadfile = char(sprintf("%is_clean.set", durations(dur)));
 
     [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
@@ -25,11 +24,6 @@ for dur = 1:3
     EEG = pop_selectevent( base_eeg, 'type',{'R  1'},'deleteevents','off','deleteepochs','on','invertepochs','off');
     [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname',set_name,'gui','off'); 
     read = EEG;
-
-    set_name = char(sprintf("%is_listen", durations(dur)));
-    EEG = pop_selectevent( base_eeg, 'type',{'L  1'},'deleteevents','off','deleteepochs','on','invertepochs','off');
-    [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname',set_name,'gui','off'); 
-    listen = EEG;
     
     set_name = char(sprintf("%is_rest", durations(dur)));
     EEG = pop_selectevent( base_eeg, 'type',{'N  1'},'deleteevents','off','deleteepochs','on','invertepochs','off');
@@ -38,17 +32,14 @@ for dur = 1:3
 
     for i = 1:size(read.data, 3)
         read_individuals(1,i) = pop_select( read, 'trial',i);
-        listen_individuals(1,i) = pop_select( listen, 'trial',i);
         rest_individuals(1,i) = pop_select( rest, 'trial',i); % this was it
 
         % sub epoch duration
         if not(dur==1)
             read_sub_epochs(1,i) = eeg_regepochs(read_individuals(1,i), 'recurrence', 5, 'limits', [0 5]);
-            listen_sub_epochs(1,i) = eeg_regepochs(listen_individuals(1,i), 'recurrence', 5, 'limits', [0 5]);
             rest_sub_epochs(1,i) = eeg_regepochs(rest_individuals(1,i), 'recurrence', 5, 'limits', [0 5]);
         else
             read_sub_epochs = read_individuals;
-            listen_sub_epochs = listen_individuals;
             rest_sub_epochs = rest_individuals;
         end
     end
@@ -64,18 +55,6 @@ for dur = 1:3
             current_eeg = read_sub_epochs(i);
             calced_features = feature_func(current_eeg);
             feat_epochs = Epoch.FromMatrix(calced_features, label=1);
-            temp_cell{i} = feat_epochs;
-        end
-        for i = 1:length(temp_cell)
-            features = features.addTrialFromEpochs(temp_cell{i});
-        end
-
-        temp_cell = {};
-        % listen
-        parfor i = 1:length(listen_sub_epochs) 
-            current_eeg = listen_sub_epochs(i);
-            calced_features = feature_func(current_eeg);
-            feat_epochs = Epoch.FromMatrix(calced_features, label=2);
             temp_cell{i} = feat_epochs;
         end
         for i = 1:length(temp_cell)
@@ -100,7 +79,7 @@ for dur = 1:3
         save([savepath savename], "features");
     
     end
-    clear read_individuals read_sub_epochs listen_individuals listen_sub_epochs rest_individuals rest_sub_epochs
+    clear read_individuals read_sub_epochs rest_individuals rest_sub_epochs
 end
 
 

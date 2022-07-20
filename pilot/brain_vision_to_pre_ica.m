@@ -1,21 +1,20 @@
 clear;
 
 %% setup
-SUBJECT_NUM = 6;
-% SUBJECT_NUM = mod(SUBJECT_NUM-1, 6)+1;
-trial_perms = flip(perms([5, 15, 60]));
-trial_perm = trial_perms(mod(SUBJECT_NUM-1, 6)+1,:);
+SUBJECT_NUM = 5;
+trial_perms = flip(perms([5, 15, 30, 60]));
+trial_perm = trial_perms(SUBJECT_NUM,:);
 
-starting_block = 1;
+starting_block = 2;
 blocks_per_dur = 3;
 
 resample_rate = 250;
 
 %%
-dur_num_points = zeros(3,1);
+dur_num_points = zeros(4,1);
 
 [ALLEEG, EEG, CURRENTSET, ALLCOM] = eeglab;
-for dur = 1:3
+for dur = 1:4
     for block = 1:blocks_per_dur 
         folder_loc = ['E:\EEG_working\EEG_data\participants\' sprintf('%i', SUBJECT_NUM) '\'];
         file_loc = char(sprintf('bl%04i.vhdr', (dur-1)*blocks_per_dur+starting_block-1+block));
@@ -28,7 +27,7 @@ for dur = 1:3
 end
 down_sampled_points = dur_num_points/2;
 
-EEG = pop_mergeset( ALLEEG, [1:3*blocks_per_dur], 0);
+EEG = pop_mergeset( ALLEEG, [1:4*blocks_per_dur], 0);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname','all_data','gui','off'); 
 
 EEG = pop_resample( EEG, resample_rate);
@@ -37,7 +36,7 @@ EEG = pop_resample( EEG, resample_rate);
 EEG = pop_eegfiltnew(EEG, 'locutoff',0.5,'hicutoff',55,'plotfreqz',0);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname','all_data_fir','gui','off'); 
 
-EEG = clean_artifacts(EEG, 'Highpass', 'off', 'LineNoiseCriterion', 3, 'WindowCriterion', 0.65);
+EEG = clean_artifacts(EEG, 'Highpass', 'off', 'WindowCriterion', 0.35);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname','raw_cleaned','gui','off'); 
 
 EEG = pop_interp(EEG, ALLEEG(end-1).chanlocs, 'spherical');

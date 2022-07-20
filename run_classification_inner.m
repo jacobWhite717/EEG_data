@@ -17,8 +17,8 @@ if isempty(gcp('nocreate'))
 end
 for s = participant_pool
     % make the folder and file name by participant
-    mkdir([pwd, '\results\participant\', char(sprintf("%i\\%s", s, classifier_str))]);
-    mat_name = ['results\participant\', char(sprintf("%i\\%s\\", s, classifier_str)), file_name, '.mat'];
+    mkdir([strrep(pwd, '\', '/'), '/results\participant/', char(sprintf("%i/%s", s, classifier_str))]);
+    mat_name = ['results/participant/', char(sprintf("%i/%s/", s, classifier_str)), file_name, '.mat'];
 
     %% load pre-saved features in TrialContainer
     fprintf('Working on subject %i\n', s);
@@ -37,60 +37,78 @@ for s = participant_pool
     
     
     %% separate out features by class
-%     trials_read = trials_features.getTrialsByClass(1);
-%     trials_rest = trials_features.getTrialsByClass(0);
-%     trials_read_rest = trials_read.appendTrialContainer(trials_rest);
+    all_trials = power_features;
+    all_trials = all_trials.combineTrialContainerEpochs(mean_features);
+    all_trials = all_trials.combineTrialContainerEpochs(var_features);
+    all_trials = all_trials.combineTrialContainerEpochs(rms_features);
 
-    trials_read_rest = power_features;
-    trials_read_rest = trials_read_rest.combineTrialContainerEpochs(mean_features);
-    trials_read_rest = trials_read_rest.combineTrialContainerEpochs(var_features);
-    trials_read_rest = trials_read_rest.combineTrialContainerEpochs(rms_features);
+    trials_r = all_trials.getTrialsByClass(1);
+    trials_l = all_trials.getTrialsByClass(2);
+    trials_n = all_trials.getTrialsByClass(0);
+
+    trials_rn = trials_r.appendTrialContainer(trials_n);
+    trials_ln = trials_l.appendTrialContainer(trials_n);
+    trials_rl = trials_r.appendTrialContainer(trials_l);
+
+    bin_classes = {trials_rn; trials_ln; trials_rl};
     
     
     %% classification params
     cv = CrossValidator(optimize_single_run);
     folds = 6;
     runs = 5;
-
-    if randomization_flag == 0 
-        % k-fold classification
-        disp('Performing k-fold classification...')
-        % lda
-        results_kfold = cv.kfold(classifier_func, trials_read_rest, folds, ...
-            num_filtered_features=feature_num, ...
-            runs=runs);
-        results_kfold_table{s} = results_kfold.makeResultsTable();
     
+    for classification = 1:3
+        if randomization_flag == 0 
+            % k-fold classification
+            disp('Performing k-fold classification...')
+            results_kfold = cv.kfold(classifier_func, bin_classes{classification}, folds, ...
+                num_filtered_features=feature_num, ...
+                runs=runs);
+            results_kfold_table{s} = results_kfold.makeResultsTable();
         
-        % blocked CV
-        disp('Performing blocked classification...')
-        % lda
-        results_block = cv.block(classifier_func, trials_read_rest, folds, ...
-            num_filtered_features=feature_num, ...
-            runs=runs);
-        results_block_table{s} = results_block.makeResultsTable();
-    else
-        % k-fold classification
-        disp('Performing k-fold classification...')
-        % lda
-        results_kfold = cv.kfold_random(classifier_func, trials_read_rest, folds, ...
-            num_filtered_features=feature_num, ...
-            runs=runs);
-        results_kfold_table{s} = results_kfold.makeResultsTable();
+            % blocked CV
+            if not(strcmp(dur_str, '5s'))
+                disp('Performing blocked classification...')
+                results_block = cv.block(classifier_func, bin_classes{classification}, folds, ...
+                    num_filtered_features=feature_num, ...
+                    runs=runs);
+                results_block_table{s} = results_block.makeResultsTable();
+            else 
+                results_block_table{s} = results_kfold.makeResultsTable();
+            end
+        else
+            % k-fold classification
+            disp('Performing k-fold classification...')
+            results_kfold = cv.kfold_random(classifier_func, bin_classes{classification}, folds, ...
+                num_filtered_features=feature_num, ...
+                runs=runs);
+            results_kfold_table{s} = results_kfold.makeResultsTable();
+          
+            % blocked CV
+            if not(strcmp(dur_str, '5s'))
+                disp('Performing blocked classification...')
+                results_block = cv.block_random_kfold_classify(classifier_func, bin_classes{classification}, folds, ...
+                    num_filtered_features=feature_num, ...
+                    runs=runs);
+                results_block_table{s} = results_block.makeResultsTable();
+            else
+                results_block_table{s} = results_kfold.makeResultsTable();
+            end
+        end
     
-        
-        % blocked CV
-        disp('Performing blocked classification...')
-        % lda
-        results_block = cv.block_random_kfold_classify(classifier_func, trials_read_rest, folds, ...
-            num_filtered_features=feature_num, ...
-            runs=runs);
-        results_block_table{s} = results_block.makeResultsTable();
+        participant_results_kfold{classification} = results_kfold_table{s};
+        participant_results_block{classification} = results_block_table{s};
     end
 
-    participant_results_kfold = results_kfold_table{s};
-    participant_results_block = results_block_table{s};
-    save(mat_name, "participant_results_kfold", "participant_results_block");
+    kfold.rn = participant_results_kfold{1};
+    kfold.ln = participant_results_kfold{2};
+    kfold.rl = participant_results_kfold{3};
+    block.rn = participant_results_block{1};
+    block.ln = participant_results_block{2};
+    block.rl = participant_results_block{3};
+
+    save(mat_name, "kfold", "block");
 end
 
 run_time = toc(t_start);

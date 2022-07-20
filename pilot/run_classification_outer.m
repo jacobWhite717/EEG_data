@@ -3,16 +3,13 @@ clear;
 optimize_single_run = true;
 num_threads = 16;
 
-addpath("../EEJacob/")
-
 %% run parameters
-participant_pool = 5;
+participant_pool = 1;
 data_folder = 'prepared_features/no_ica';
 load_file_names = {'5s_features.mat'};
-% load_file_names = {'5s_features.mat', '15s_features.mat', '60s_features.mat'};
 classifier_funcs = {@fitcsvm};
 feature_nums = {30};
-randomization_flags = {0, 1};
+randomization_flags = {0};
 
 run_params_set = [];
 for i = 1:length(load_file_names)
@@ -52,8 +49,6 @@ for i = 1:length(run_params_set)
     % file_name formatting looks like: 'svm/r 60s 30 feats';
     file_name = char(sprintf("%s %s %i feats", randomization_str, dur_str, feature_num));
 
-    fprintf('parameter set %i/%i\n', i, length(run_params_set));
-    fprintf('Duration: %s / Classifier: %s / Feature num: %i / randomized flag: %i\n', dur_str, classifier_str, feature_num, randomization_flag);
     run_classification_inner;
 
 end

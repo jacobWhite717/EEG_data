@@ -1,11 +1,11 @@
 clear;
 
-SUBJECT_NUM = 6;
-% SUBJECT_NUM = mod(SUBJECT_NUM-1, 6)+1;
-trial_perms = flip(perms([5, 15, 60]));
-trial_perm = trial_perms(mod(SUBJECT_NUM-1, 6)+1,:);
+SUBJECT_NUM = 4;
 
-buffer_duration = [0, 2, 0, 0, 0, 0, 0, 0, 0, 0];
+trial_perms = flip(perms([5, 15, 30, 60]));
+trial_perm = trial_perms(SUBJECT_NUM,:);
+
+buffer_duration = [0, 2, 0, 0, 0];
 sampling_rate = 250;
 
 [ALLEEG, EEG, CURRENTSET, ALLCOM] = eeglab;
@@ -18,7 +18,7 @@ cleaned_all = EEG;
 loadname = sprintf("participants/%i/cleaned/durations.mat", SUBJECT_NUM);
 load(loadname)
 
-for dur = 1:3
+for dur = 1:4
     if dur == 1
         start_point = 1;
         end_point = down_sampled_points(1);
@@ -35,13 +35,13 @@ for dur = 1:3
     
     % select only relevant events
     set_name = char(sprintf("%is_events", trial_perm(dur)));
-    EEG = pop_selectevent( EEG, 'type',{'N  1','R  1', 'L  1'},'deleteevents','on');
+    EEG = pop_selectevent( EEG, 'type',{'N  1','R  1'},'deleteevents','on');
     [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname',set_name,'gui','off'); 
     EEG = eeg_checkset( EEG );
        
     % get relevant epochs
     set_name = char(sprintf("%is_epochs", trial_perm(dur)));
-    EEG = pop_epoch( EEG, { 'N  1'  'R  1' 'L  1' }, [0  trial_perm(dur)+buffer_duration(SUBJECT_NUM)], 'newname', set_name, 'epochinfo', 'yes');
+    EEG = pop_epoch( EEG, { 'N  1'  'R  1' }, [0  trial_perm(dur)+buffer_duration(SUBJECT_NUM)], 'newname', set_name, 'epochinfo', 'yes');
     [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'gui','off'); 
     EEG = eeg_checkset( EEG );
 
