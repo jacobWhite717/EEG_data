@@ -9,6 +9,7 @@ verbose = false;
 
 results_kfold_table = cell(num_subjects, 1);
 results_block_table = cell(num_subjects, 1);
+results_block2_table = cell(num_subjects, 1);
 
 
 %%
@@ -60,7 +61,7 @@ for s = participant_pool
     
     for classification = 1:3
         if randomization_flag == 0 
-            % k-fold classification
+            % k-fold CV
             disp('Performing k-fold classification...')
             results_kfold = cv.kfold(classifier_func, bin_classes{classification}, folds, ...
                 num_filtered_features=feature_num, ...
@@ -77,17 +78,17 @@ for s = participant_pool
             else 
                 results_block_table{s} = results_kfold.makeResultsTable();
             end
-        else
-            % k-fold classification
-            disp('Performing k-fold classification...')
+        else % if randomized flag
+            % fully randomized kfold CV
+            disp('Performing fully-randomized kfold classification...')
             results_kfold = cv.kfold_random(classifier_func, bin_classes{classification}, folds, ...
                 num_filtered_features=feature_num, ...
                 runs=runs);
             results_kfold_table{s} = results_kfold.makeResultsTable();
           
-            % blocked CV
+            % trial randomized kfold CV
             if not(strcmp(dur_str, '5s'))
-                disp('Performing blocked classification...')
+                disp('Performing trial-randomized kfold classification...')
                 results_block = cv.block_random_kfold_classify(classifier_func, bin_classes{classification}, folds, ...
                     num_filtered_features=feature_num, ...
                     runs=runs);
@@ -95,10 +96,22 @@ for s = participant_pool
             else
                 results_block_table{s} = results_kfold.makeResultsTable();
             end
+
+            % trial randomized block CV
+            if not(strcmp(dur_str, '5s'))
+                disp('Performing trial-randomized block classification...')
+                results_block2 = cv.block_random(classifier_func, bin_classes{classification}, folds, ...
+                    num_filtered_features=feature_num, ...
+                    runs=runs);
+                results_block2_table{s} = results_block2.makeResultsTable();
+            else
+                results_block2_table{s} = results_kfold.makeResultsTable();
+            end
         end
     
         participant_results_kfold{classification} = results_kfold_table{s};
         participant_results_block{classification} = results_block_table{s};
+        participant_results_block2{classification} = results_block2_table{s};
     end
 
     kfold.rn = participant_results_kfold{1};
@@ -107,8 +120,11 @@ for s = participant_pool
     block.rn = participant_results_block{1};
     block.ln = participant_results_block{2};
     block.rl = participant_results_block{3};
+    block2.rn = participant_results_block2{1};
+    block2.ln = participant_results_block2{2};
+    block2.rl = participant_results_block2{3};
 
-    save(mat_name, "kfold", "block");
+    save(mat_name, "kfold", "block", "block2");
 end
 
 run_time = toc(t_start);
