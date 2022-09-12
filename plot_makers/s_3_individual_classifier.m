@@ -1,10 +1,13 @@
 clear;
-close all;
-%% run parameters
+% close all;
 
-participant_pool = 5:9;
+%% run parameters
+% use only 1 clasifier and feature_num at a time
+% leave random to other script
+participant_pool = 5:13;
+feature_catagory_str = 'all';
 load_file_names = {'5s_features.mat', '15s_features.mat', '60s_features.mat'};
-classifier_funcs = {@fitcsvm};
+classifier_funcs = {@fitcsvm}; % @fitcsvm / @fitcknn / @fitcdiscr 
 feature_nums = {30};
 randomization_flags = {0};
 
@@ -65,7 +68,7 @@ for i = 1:length(run_params_set)
     file_str = char(sprintf("%s %s %i feats", randomization_str, dur_str, feature_num));
 
     for s = participant_pool
-        mat_name = ['results/participant/', char(sprintf("%i/%s/", s, classifier_str)), file_str, '.mat'];
+        mat_name = ['results/participant/', char(sprintf("%i/%s/%s/", s, feature_catagory_str, classifier_str)), file_str, '.mat'];
         kfold = load(mat_name).kfold;
         block = load(mat_name).block;
         
@@ -184,17 +187,19 @@ b(2).FaceColor = [0.6350 0.0780 0.1840];
 % b(2).CData(:,:) = ones(9,3).*[0.6350 0.0780 0.1840]; 
 % b(2).CData([1 4 7],:) = ones(3,3).*[0.3 0.4470 0.7410]; 
 % labeling
-title("Classification (True Labels)")
+title_str = sprintf("Classification (True Labels) using %s Classifier", string(classifier_str));
+title(title_str)
+% title("Classification (True Labels)")
 set(gca, 'xtick', [1:9], 'xticklabel', tick_labels)
 ylabel("Accuracy (%)")
 xlabel("Trial Duration (s)")
 ylim([ymin ymax])
 xlim([0.5 9.5])
-text(1, ymax-2, "Low Class Seperability", 'fontweight','bold')
+text(1, ymax-2, "High Class Seperability", 'fontweight','bold')
 text(1.5, ymax-5, "(Read/Rest)")
-text(4, ymax-2, "High Class Seperability", 'fontweight','bold')
+text(4, ymax-2, "Low Class Seperability", 'fontweight','bold')
 text(4.5, ymax-5, "(Listen/Rest)")
-text(7, ymax-2, "Low Class Seperability", 'fontweight','bold')
+text(7, ymax-2, "High Class Seperability", 'fontweight','bold')
 text(7.5, ymax-5, "(Read/Listen)")
 % plot([0 10], [50 50], '--k')
 plot([0.5 3.5], [rn_k_mean_5 rn_k_mean_5], '--k')
@@ -210,7 +215,7 @@ for i = 1:nbars
     errorbar(x, means(:,i), errors(:,i), 'k', 'linestyle', 'none');
 end
 
-legend(["", "", "k-fold", "block", """Ground-truth"""], 'location', 'SE')
+legend(["", "", "k-fold", "block", """ground truth"""], 'location', 'SE')
 
 %set size
 set(f,'Position',[10 10 850 440])
