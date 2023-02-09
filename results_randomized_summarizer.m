@@ -6,8 +6,9 @@ load_file_names = {'5s_features.mat', '15s_features.mat', '60s_features.mat'};
 % load_file_names = {'15s_features.mat'};
 classifier_funcs = {@fitcsvm, @fitcknn, @fitcdiscr};
 feature_nums = {30};
-randomization_flags = {0};
-feature_types = {'pentropy'};%, 'mean', 'variance', 'rms'};
+randomization_flags = {1};
+feature_types = {'pentropy'};
+% feature_types = {'bandpower', 'mean', 'variance', 'rms'};
 
 results_sub_folder = 'no_ica'; 
 
@@ -61,36 +62,49 @@ for i = 1:length(run_params_set)
         kfold_rn = kfold_rn.rn;
         block_rn = load(mat_file).block;
         block_rn = block_rn.rn;
+        block2_rn = load(mat_file).block2;
+        block2_rn = block2_rn.rn;
         results_kfold_rn_table{s} = kfold_rn;
         results_block_rn_table{s} = block_rn;
+        results_block2_rn_table{s} = block2_rn;
 
         kfold_ln = load(mat_file).kfold;
         kfold_ln = kfold_ln.ln;
         block_ln = load(mat_file).block;
         block_ln = block_ln.ln;
+        block2_ln = load(mat_file).block2;
+        block2_ln = block2_ln.ln;
         results_kfold_ln_table{s} = kfold_ln;
         results_block_ln_table{s} = block_ln;
+        results_block2_ln_table{s} = block2_ln;
 
         kfold_rl = load(mat_file).kfold;
         kfold_rl = kfold_rl.rl;
         block_rl = load(mat_file).block;
         block_rl = block_rl.rl;
+        block2_rl = load(mat_file).block2;
+        block2_rl = block2_rl.rl;
         results_kfold_rl_table{s} = kfold_rl;
         results_block_rl_table{s} = block_rl;
+        results_block2_rl_table{s} = block2_rl;
     end
     summary_kfold_rn = make_results_summary(results_kfold_rn_table, min(participant_pool)-1);
     summary_block_rn = make_results_summary(results_block_rn_table, min(participant_pool)-1);
+    summary_block2_rn = make_results_summary(results_block2_rn_table, min(participant_pool)-1);
 
     summary_kfold_ln = make_results_summary(results_kfold_ln_table, min(participant_pool)-1);
     summary_block_ln = make_results_summary(results_block_ln_table, min(participant_pool)-1);
+    summary_block2_ln = make_results_summary(results_block2_ln_table, min(participant_pool)-1);
 
     summary_kfold_rl = make_results_summary(results_kfold_rl_table, min(participant_pool)-1);
     summary_block_rl = make_results_summary(results_block_rl_table, min(participant_pool)-1);
+    summary_block2_rl = make_results_summary(results_block2_rl_table, min(participant_pool)-1);
 
 
     sheet_name = "Summary";
-    col1_name = "kfold";
-    col2_name = "block";
+    col1_name = "epoch-random/kfold";
+    col2_name = "trial-random/kfold";
+    col3_name = "trial-random/block";
     
     % Read/None classification tables
     writematrix("Read - Rest", excel_name, 'Sheet', sheet_name, 'Range', 'B2');
@@ -101,23 +115,35 @@ for i = 1:length(run_params_set)
     writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'G3');
     writetable(summary_block_rn, excel_name, 'Sheet', sheet_name, 'Range', 'G4', 'WriteRowNames', true);
 
+    writematrix("Read - Rest", excel_name, 'Sheet', sheet_name, 'Range', 'L2');
+    writematrix(col3_name, excel_name, 'Sheet', sheet_name, 'Range', 'L3');
+    writetable(summary_block2_rn, excel_name, 'Sheet', sheet_name, 'Range', 'L4', 'WriteRowNames', true);
+
     % Listen/None classification tables
-    writematrix("Listen - Rest", excel_name, 'Sheet', sheet_name, 'Range', 'L2');
-    writematrix(col1_name, excel_name, 'Sheet', sheet_name, 'Range', 'L3');
-    writetable(summary_kfold_ln, excel_name, 'Sheet', sheet_name, 'Range', 'L4', 'WriteRowNames', true);
-    
     writematrix("Listen - Rest", excel_name, 'Sheet', sheet_name, 'Range', 'Q2');
-    writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'Q3');
-    writetable(summary_block_ln, excel_name, 'Sheet', sheet_name, 'Range', 'Q4', 'WriteRowNames', true);
+    writematrix(col1_name, excel_name, 'Sheet', sheet_name, 'Range', 'Q3');
+    writetable(summary_kfold_ln, excel_name, 'Sheet', sheet_name, 'Range', 'Q4', 'WriteRowNames', true);
+    
+    writematrix("Listen - Rest", excel_name, 'Sheet', sheet_name, 'Range', 'V2');
+    writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'V3');
+    writetable(summary_block_ln, excel_name, 'Sheet', sheet_name, 'Range', 'V4', 'WriteRowNames', true);
+
+    writematrix("Listen - Rest", excel_name, 'Sheet', sheet_name, 'Range', 'AA2');
+    writematrix(col3_name, excel_name, 'Sheet', sheet_name, 'Range', 'AA3');
+    writetable(summary_block2_ln, excel_name, 'Sheet', sheet_name, 'Range', 'AA4', 'WriteRowNames', true);
 
     % Read/Listen classification tables
-    writematrix("Read - Listen", excel_name, 'Sheet', sheet_name, 'Range', 'V2');
-    writematrix(col1_name, excel_name, 'Sheet', sheet_name, 'Range', 'V3');
-    writetable(summary_kfold_rl, excel_name, 'Sheet', sheet_name, 'Range', 'V4', 'WriteRowNames', true);
+    writematrix("Read - Listen", excel_name, 'Sheet', sheet_name, 'Range', 'AF2');
+    writematrix(col1_name, excel_name, 'Sheet', sheet_name, 'Range', 'AF3');
+    writetable(summary_kfold_rl, excel_name, 'Sheet', sheet_name, 'Range', 'AF4', 'WriteRowNames', true);
     
-    writematrix("Read - Listen", excel_name, 'Sheet', sheet_name, 'Range', 'AA2');
-    writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'AA3');
-    writetable(summary_block_rl, excel_name, 'Sheet', sheet_name, 'Range', 'AA4', 'WriteRowNames', true);
+    writematrix("Read - Listen", excel_name, 'Sheet', sheet_name, 'Range', 'AK2');
+    writematrix(col2_name, excel_name, 'Sheet', sheet_name, 'Range', 'AK3');
+    writetable(summary_block_rl, excel_name, 'Sheet', sheet_name, 'Range', 'AK4', 'WriteRowNames', true);
+
+    writematrix("Read - Listen", excel_name, 'Sheet', sheet_name, 'Range', 'AP2');
+    writematrix(col3_name, excel_name, 'Sheet', sheet_name, 'Range', 'AP3');
+    writetable(summary_block2_rl, excel_name, 'Sheet', sheet_name, 'Range', 'AP4', 'WriteRowNames', true);
     
     for s = participant_pool
         sheet_name = sprintf('Sub %02i', s);
