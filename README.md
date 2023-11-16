@@ -16,6 +16,10 @@ EEGLAB is also required for the processing functions and can be obtained [from t
 ### Participant Trial Duration Ordering by BrainVision Block \#
 If you wish to do your own processing from the raw data, the brainvision files saved correlate to the following trial duration blocks:
 
+i.e. on these files:
+
+![raw brainvision data files](raw_data_files_eg.png)
+
 | Number | 5s Blocks | 15s Blocks | 60s Blocks |
 | --- | --- | --- | ---|
 | 1-4 | / | / | / |
