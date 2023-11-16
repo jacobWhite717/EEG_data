@@ -2,10 +2,10 @@ clear;
 %% run parameters
 
 participant_pool = 5:16;
-classifier_funcs = {@fitcsvm, @fitcknn, @fitcdiscr};
+classifier_funcs = {@fitcsvm, @fitcdiscr, @fitcknn};
 feature_nums = {30};
 randomization_flags = {1};
-feature_types = {'bandpower', 'pentropy', 'variance', 'rms'};
+feature_types = {'bandpower', 'pentropy', 'rms', 'variance'};
 
 results_sub_folder = 'no_ica'; 
 
@@ -27,7 +27,7 @@ end
 
 for i = 1:length(run_params_set)
     col = 3 + 9*floor((i-1)/4);
-    row = 3 + 9*mod(i-1,4);
+    row = 3 + 11*mod(i-1,4);
 
 
     classifier_func = run_params_set(i).classifier;
@@ -49,6 +49,8 @@ for i = 1:length(run_params_set)
         file_name = char(sprintf("%s %s %i feats", randomization_str, dur_str, feature_num));
         gt_file_name = char(sprintf("%s %s %i feats", randomization_str, '5s', feature_num));
                 
+        epoch_hs = [];
+        epoch_ls = [];
         kfold_hs = [];
         kfold_ls = [];
         block_hs = [];
@@ -57,6 +59,11 @@ for i = 1:length(run_params_set)
             mat_file = ['results/participant/', results_sub_folder, char(sprintf("/%i/%s/%s/", s, feature_type, classifier_str)), file_name, '.mat'];
     
             % note names were not updated to reflect contents, just block/block2 are now grabbed
+            epoch_temp = load(mat_file).kfold.rn.Accuracy('mean');
+            epoch_hs = [epoch_hs; epoch_temp];
+            epoch_temp = load(mat_file).kfold.ln.Accuracy('mean');
+            epoch_ls = [epoch_ls; epoch_temp];
+
             kfold_temp = load(mat_file).block.rn.Accuracy('mean');
             kfold_hs = [kfold_hs; kfold_temp];
             kfold_temp = load(mat_file).block.ln.Accuracy('mean');
@@ -69,14 +76,19 @@ for i = 1:length(run_params_set)
         end
         
         chance = 50;
+        [h_eh, p_eh] = ttest(epoch_hs, chance, 'Alpha', 0.05);
+        [h_el, p_el] = ttest(epoch_ls, chance, 'Alpha', 0.05);
+
         [h_kh, p_kh] = ttest(kfold_hs, chance, 'Alpha', 0.05);
         [h_kl, p_kl] = ttest(kfold_ls, chance, 'Alpha', 0.05);
         
         [h_bh, p_bh] = ttest(block_hs, chance, 'Alpha', 0.05);
         [h_bl, p_bl] = ttest(block_ls, chance, 'Alpha', 0.05);
     
-        stats_array_temp = [p_kh, h_kh;
+        stats_array_temp = [p_eh, h_eh;
+                            p_kh, h_kh;
                             p_bh, h_bh;
+                            p_el, h_el;
                             p_kl, h_kl;
                             p_bl, h_bl];
         stats_array = [stats_array, stats_array_temp];
@@ -145,7 +157,7 @@ arguments
 end
     starting_cell = change_excel_addr(cell_col, cell_row, 0, 0);
     col_names = ["p", "sig?", "p ", "sig? "];
-    row_names = ["T.R./k-f", "T.R./block", "T.R./k-f.", "T.R./block."];
+    row_names = ["S.R./k-f", "T.R./k-f", "T.R./block", "S.R./k-f.", "T.R./k-f.", "T.R./block."];
     stats_tbl = array2table(stats_arr, "RowNames", row_names, 'VariableNames', col_names);
     writetable(stats_tbl, file_name, 'Sheet', "random", 'Range', starting_cell, 'WriteRowNames', true);
     writematrix("Comparison", file_name, 'Sheet', "random", 'Range', starting_cell);
@@ -153,7 +165,7 @@ end
     active_cell = change_excel_addr(cell_col, cell_row, -1, 1);
     writematrix("High Sep", file_name, 'Sheet', "random", 'Range', active_cell);
 
-    active_cell = change_excel_addr(cell_col, cell_row, -1, 3);
+    active_cell = change_excel_addr(cell_col, cell_row, -1, 4);
     writematrix("Low Sep", file_name, 'Sheet', "random", 'Range', active_cell);
 
     active_cell = change_excel_addr(cell_col, cell_row, 1, -1);

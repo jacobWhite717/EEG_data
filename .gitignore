@@ -5,3 +5,6 @@ prepared_features/
 results/
 *.mat
 *.asv
+test*
+ANOVA tables/
+automated plot_makers_latex/*

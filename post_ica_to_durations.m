@@ -1,11 +1,13 @@
 clear;
 
-SUBJECT_NUM = 6;
+SUBJECT_NUM = 16;
 % SUBJECT_NUM = mod(SUBJECT_NUM-1, 6)+1;
 trial_perms = flip(perms([5, 15, 60]));
 trial_perm = trial_perms(mod(SUBJECT_NUM-1, 6)+1,:);
 
-buffer_duration = [0, 2, 0, 0, 0, 0, 0, 0, 0, 0];
+if SUBJECT_NUM == 16 trial_perm = [15,5,60]; end % p16 hack
+
+buffer_duration = [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 sampling_rate = 250;
 
 [ALLEEG, EEG, CURRENTSET, ALLCOM] = eeglab;

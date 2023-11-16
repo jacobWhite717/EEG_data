@@ -72,7 +72,7 @@ function r_classifier_average_for_feature(data_folder, subject_range, feature_ca
         errorbar(x, means(:,i), errors(:,i), 'k', 'linestyle', 'none');
     end
     
-    f_leg = legend(["", "", "trial random/k-fold", "trial random/block", "epoch random/k-fold", "chance"], 'location', 'SW');
+    f_leg = legend(["", "", "trial random/k-fold", "trial random/block-wise", "epoch random/k-fold", "chance"], 'location', 'SW');
     f_leg.BoxFace.ColorType='truecoloralpha';
     f_leg.BoxFace.ColorData=uint8(255*[1 1 1 0.6]');
     

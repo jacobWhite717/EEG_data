@@ -2,7 +2,7 @@ clear;
 close all;
 %% run parameters
 
-participant_pool = 5:9;
+participant_pool = 5:16;
 load_file_names = {'5s_features.mat', '15s_features.mat', '60s_features.mat'};
 classifier_funcs = {@fitcsvm};
 feature_nums = {30};

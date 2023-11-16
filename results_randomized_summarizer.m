@@ -3,12 +3,10 @@ clear;
 
 participant_pool = 5:16;
 load_file_names = {'5s_features.mat', '15s_features.mat', '60s_features.mat'};
-% load_file_names = {'15s_features.mat'};
 classifier_funcs = {@fitcsvm, @fitcknn, @fitcdiscr};
 feature_nums = {30};
 randomization_flags = {1};
-feature_types = {'pentropy'};
-% feature_types = {'bandpower', 'mean', 'variance', 'rms'};
+feature_types = {'bandpower', 'pentropy', 'variance', 'rms'}; %'mean'
 
 results_sub_folder = 'no_ica'; 
 

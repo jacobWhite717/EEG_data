@@ -63,7 +63,7 @@ function s_classifier_average_for_feature(data_folder, subject_range, feature_ca
         errorbar(x, means(:,i), errors(:,i), 'k', 'linestyle', 'none');
     end
     
-    legend(["", "", "k-fold", "block", """ground truth"""], 'location', 'SW')
+    legend(["", "", "k-fold", "block-wise", """ground truth"""], 'location', 'SW')
     
     %set size
     if c_disp == 2

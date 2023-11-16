@@ -2,10 +2,10 @@ clear;
 %% run parameters
 
 participant_pool = 5:16;
-classifier_funcs = {@fitcsvm, @fitcknn, @fitcdiscr};
+classifier_funcs = {@fitcsvm, @fitcdiscr, @fitcknn};
 feature_nums = {30};
 randomization_flags = {0};
-feature_types = {'bandpower', 'pentropy', 'variance', 'rms'};
+feature_types = {'bandpower', 'pentropy', 'rms', 'variance'};
 
 results_sub_folder = 'no_ica'; 
 

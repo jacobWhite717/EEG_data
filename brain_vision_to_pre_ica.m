@@ -1,12 +1,14 @@
 clear;
 
 %% setup
-SUBJECT_NUM = 6;
+SUBJECT_NUM = 15;
 % SUBJECT_NUM = mod(SUBJECT_NUM-1, 6)+1;
 trial_perms = flip(perms([5, 15, 60]));
 trial_perm = trial_perms(mod(SUBJECT_NUM-1, 6)+1,:);
 
-starting_block = 1;
+if SUBJECT_NUM == 16 trial_perm = [15,5,60]; end % p16 hack
+
+starting_block = 0;
 blocks_per_dur = 3;
 
 resample_rate = 250;
@@ -14,6 +16,7 @@ resample_rate = 250;
 %%
 dur_num_points = zeros(3,1);
 
+tic
 [ALLEEG, EEG, CURRENTSET, ALLCOM] = eeglab;
 for dur = 1:3
     for block = 1:blocks_per_dur 
@@ -37,7 +40,7 @@ EEG = pop_resample( EEG, resample_rate);
 EEG = pop_eegfiltnew(EEG, 'locutoff',0.5,'hicutoff',55,'plotfreqz',0);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname','all_data_fir','gui','off'); 
 
-EEG = clean_artifacts(EEG, 'Highpass', 'off', 'LineNoiseCriterion', 3, 'WindowCriterion', 0.65);
+EEG = clean_artifacts(EEG, 'Highpass', 'off', 'LineNoiseCriterion', 3, 'WindowCriterion', 0.5); % .5
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, length(ALLEEG),'setname','raw_cleaned','gui','off'); 
 
 EEG = pop_interp(EEG, ALLEEG(end-1).chanlocs, 'spherical');
@@ -55,7 +58,7 @@ EEG = pop_saveset( cleaned_all, 'filename',save_name,'filepath',file_path);
 file_path = ['E:\\EEG_working\\EEG_data\\participants\\' char(sprintf("%i", SUBJECT_NUM)) '\\cleaned\\'];
 save_name = 'durations.mat';
 save([file_path save_name], "down_sampled_points");
-
+toc
 
 % EEG = pop_loadset('filename','all.set','filepath','E:\\EEG_working\\EEG_data\\participants\\1\\cleaned\\');
 % [ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, length(ALLEEG) );
